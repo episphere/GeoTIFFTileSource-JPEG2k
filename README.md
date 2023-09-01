@@ -1,4 +1,4 @@
-###NOTE: 
+### NOTE: 
 This is a fork of [pearcetm's original OpenSeadragon plugin](https://github.com/pearcetm/GeoTIFFTileSource) meant to use ES6 imports to encapsulate the GeoTIFF.js dependency inside the TileSource itself. Also, this fork supports TIFF pyramids compressed using JPEG-2000 by leveraging the [WASM port of OpenJPEG](https://github.com/cornerstonejs/codecs/tree/main/packages/openjpeg) provided by the great folk at CornerstoneJS!
 
 # GeoTIFFTileSource
