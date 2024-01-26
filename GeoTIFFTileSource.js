@@ -45,24 +45,26 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
                 importScripts("https://cdn.jsdelivr.net/npm/@cornerstonejs/codec-openjpeg@1.2.2/dist/openjpegwasm.js");
                 importScripts("https://cdn.jsdelivr.net/npm/geotiff@2.0.7");
                 
-                const wasmBinaryFile = "https://cdn.jsdelivr.net/gh/PrafulB/openjpegjs@master/dist/openjpegjs.wasm"
-                
-                GeoTIFF.addDecoder([33003, 33005], async () => OpenJPEGWASM({'locateFile': (path,scriptDirectory) => "https://cdn.jsdelivr.net/npm/@cornerstonejs/codec-openjpeg@1.2.2/dist/"+path}).then(openjpegWASM => {
-                        let decoder = new openjpegWASM.J2KDecoder();
-                        return class JPEG2000Decoder extends GeoTIFF.BaseDecoder {
-                            constructor(fileDirectory) {
-                                super();
-                            }
-                            decodeBlock(b) {
-                                let encodedBuffer = decoder.getEncodedBuffer(b.byteLength);
-                                encodedBuffer.set(new Uint8Array(b));
-                                decoder.decode();
-                                let decodedBuffer = decoder.getDecodedBuffer();
-                                return decodedBuffer.buffer;
-                            }
+                let decoder = {}
+                OpenJPEGWASM({'locateFile': (path,scriptDirectory) => "https://cdn.jsdelivr.net/npm/@cornerstonejs/codec-openjpeg@1.2.2/dist/"+path}).then(openjpegWASM => {
+                    decoder = new openjpegWASM.J2KDecoder();
+                })
+
+                GeoTIFF.addDecoder([33003, 33005], async () => 
+                    class JPEG2000Decoder extends GeoTIFF.BaseDecoder {
+                        constructor(fileDirectory) {
+                            super();
                         }
-                    })
+                        decodeBlock(b) {
+                            let encodedBuffer = decoder.getEncodedBuffer(b.byteLength);
+                            encodedBuffer.set(new Uint8Array(b));
+                            decoder.decode();
+                            let decodedBuffer = decoder.getDecodedBuffer();
+                            return decodedBuffer.buffer;
+                        }
+                    }
                 );
+                
                 self.addEventListener('message', async (e) => {
                     const { id, fileDirectory, buffer } = e.data;
                     const decoder = await GeoTIFF.getDecoder(fileDirectory);
