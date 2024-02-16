@@ -49,13 +49,12 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
         // Create Pool for JPEG-2000 encoded images
         
         const imageCompression = input.GeoTIFFImages[0].fileDirectory.Compression
-        const supportedCompressions = Object.keys(supportedDecoders).map(parseInt)
         
         this._pool?.destroy()
-        if (supportedCompressions.includes(imageCompression) && this._pool?.compressionMethod !== imageCompression) {
+        if (supportedDecoders[imageCompression] && this._pool?.compressionMethod !== imageCompression) {
             this._pool = undefined
             const createWorker = () => new Worker(URL.createObjectURL(new Blob([`
-                importScripts("${baseURL}/decoders/decoder_33005.js")
+                importScripts("${baseURL}/decoders/${supportedDecoders[imageCompression]}")
             `])))
             this._pool = new Pool(navigator.hardwareConcurrency, createWorker)
         } else {
