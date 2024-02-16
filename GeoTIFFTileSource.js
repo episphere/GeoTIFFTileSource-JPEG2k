@@ -6,6 +6,14 @@
 import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/geotiff/+esm"
 
 (function ($) {
+
+    const baseURL = import.meta.url.split("/").slice(0, -1).join("/");
+    const decodersJSON_URL = `${baseURL}/decoders/decoders.json`;
+    
+    let supportedDecoders = {};
+    fetch(decodersJSON_URL).then(resp => resp.json()).then(decoders => {
+        supportedDecoders = decoders
+    })
     /**
      * @class GeoTIFFTileSource
      * @classdesc The GeoTIFFTileSource uses a the GeoTIFF.js library to serve tiles from local file or remote URL. Requires GeoTIFF.js.
@@ -29,55 +37,32 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
      * @property {Array}  levels
      */
 
-
     $.GeoTIFFTileSource = function (input, opts = { logLatency: false, cache: true }) {
         let self = this;
         this.options = opts;
+
+        
 
         // $.TileSource.apply( this, [ {width:1,height:1} ] );
         $.TileSource.apply(this);
         this._ready = false;
         // Create Pool for JPEG-2000 encoded images
+        
+        const imageCompression = input.GeoTIFFImages[0].fileDirectory.Compression
+        const supportedCompressions = Object.keys(supportedDecoders).map(parseInt)
+        
         this._pool?.destroy()
-        if (input.GeoTIFFImages[0].fileDirectory.Compression === 33005 && this._pool?.compressionMethod !== 33005) {
+        if (supportedCompressions.includes(imageCompression) && this._pool?.compressionMethod !== imageCompression) {
             this._pool = undefined
             const createWorker = () => new Worker(URL.createObjectURL(new Blob([`
-                importScripts("https://cdn.jsdelivr.net/npm/@cornerstonejs/codec-openjpeg@1.2.2/dist/openjpegwasm.js");
-                importScripts("https://cdn.jsdelivr.net/npm/geotiff@2.0.7");
-                
-                let decoder = {}
-                OpenJPEGWASM({'locateFile': (path,scriptDirectory) => "https://cdn.jsdelivr.net/npm/@cornerstonejs/codec-openjpeg@1.2.2/dist/"+path}).then(openjpegWASM => {
-                    decoder = new openjpegWASM.J2KDecoder();
-                })
-
-                GeoTIFF.addDecoder([33003, 33005], async () => 
-                    class JPEG2000Decoder extends GeoTIFF.BaseDecoder {
-                        constructor(fileDirectory) {
-                            super();
-                        }
-                        decodeBlock(b) {
-                            let encodedBuffer = decoder.getEncodedBuffer(b.byteLength);
-                            encodedBuffer.set(new Uint8Array(b));
-                            decoder.decode();
-                            let decodedBuffer = decoder.getDecodedBuffer();
-                            return decodedBuffer.buffer;
-                        }
-                    }
-                );
-                
-                self.addEventListener('message', async (e) => {
-                    const { id, fileDirectory, buffer } = e.data;
-                    const decoder = await GeoTIFF.getDecoder(fileDirectory);
-                    const decoded = await decoder.decode(fileDirectory, buffer);
-                    // console.log(decoded)
-                    self.postMessage({ decoded, id }, [decoded]);
-                });
+                importScripts("${baseURL}/decoders/decoder_33005.js")
             `])))
             this._pool = new Pool(navigator.hardwareConcurrency, createWorker)
         } else {
             this._pool = new Pool(); 
         }
-        this._pool['compressionMethod'] = input.GeoTIFFImages[0].fileDirectory.Compression
+        this._pool['compressionMethod'] = imageCompression
+        
         this._setupComplete = function () {
             this._ready = true;
             // self.promises.ready.resolve();
