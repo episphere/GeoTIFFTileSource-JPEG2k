@@ -7,7 +7,7 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
 
 (function ($) {
 
-    const baseURL = import.meta.url.split("/").slice(0, -1).join("/");
+    const baseURL = "https://cdn.jsdelivr.net/gh/episphere/imagebox3";
     const decodersJSON_URL = `${baseURL}/decoders/decoders.json`;
     
     let supportedDecoders = {};
