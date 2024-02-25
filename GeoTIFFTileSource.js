@@ -116,7 +116,7 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
     //Static functions
     
     //To do: add documentation about what this does (i.e. separates likely subimages into separate GeoTIFFTileSource objects)
-    $.GeoTIFFTileSource.getAllTileSources = async function (input, opts = { cache: true }) {
+    $.GeoTIFFTileSource.getAllTileSources = async function (input, opts = { cache: true, slideOnly: false }) {
         let cacheControlHeaders = undefined
         if (opts.cache === false) {
             cacheControlHeaders = {
@@ -153,9 +153,21 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
                     }
                     return accumulator;
                 }, []);
-
+                
                 let imagesets = aspectRatioSets.map(set => set.images);
+                if ( opts.slideOnly ) {
+                    // Useful primarily to ensure that a worker pool is only created for the slide images.
+                    imagesets = imagesets.reduce((largestSet, set) => {
+                        // Assume that the slide has the most image representations in the pyramid and also the image with the greatest width.
+                        if (largestSet.length < set.length || (largestSet.length === set.length && largestSet[0].getWidth() < set[0].getWidth())) {
+                            largestSet = set
+                        }
+                        return largestSet
+                    }, [])
+                }
+                
                 let tilesources = imagesets.map(images => new $.GeoTIFFTileSource({ GeoTIFF: tiff, GeoTIFFImages: images }, opts));
+                
                 return tilesources;
 
             })

@@ -44,8 +44,17 @@ function setupImage(tileSourceInput,tilesourceName=''){
     clearImageInfo();
     document.getElementById('filename').textContent=tilesourceName;
 
-    let tiffTileSources = OpenSeadragon.GeoTIFFTileSource.getAllTileSources(tileSourceInput, {logLatency: true});
-    tiffTileSources.then(ts=>viewer.open(ts));
+    let tiffTileSources = OpenSeadragon.GeoTIFFTileSource.getAllTileSources(tileSourceInput, {logLatency: true });
+    tiffTileSources.then(ts=>{
+        if (viewer.tileSources) {
+            if (Array.isArray(viewer.tileSources)) {
+                viewer.tileSources.forEach(ts => ts._pool?.destroy())
+            } else {
+                viewer.tileSources._pool?.destroy()
+            }
+        }
+        viewer.open(ts)
+    });
 
     tiffTileSources.then(tileSources=>{
         document.getElementById('filename').textContent += ' -- '+tileSources.length+' image'+(tileSources.length!=1?'s':'')+' found'
