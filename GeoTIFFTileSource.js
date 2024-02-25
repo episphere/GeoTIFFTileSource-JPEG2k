@@ -41,8 +41,6 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
         let self = this;
         this.options = opts;
 
-        
-
         // $.TileSource.apply( this, [ {width:1,height:1} ] );
         $.TileSource.apply(this);
         this._ready = false;
@@ -50,7 +48,11 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
         
         const imageCompression = input.GeoTIFFImages[0].fileDirectory.Compression
         
-        this._pool?.destroy()
+        this.destroyPool = function () {
+            this._pool?.destroy()
+        }
+        this.destroyPool()
+        
         if (supportedDecoders[imageCompression] && this._pool?.compressionMethod !== imageCompression) {
             this._pool = undefined
             const createWorker = () => new Worker(URL.createObjectURL(new Blob([`
@@ -61,7 +63,7 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
             this._pool = new Pool(); 
         }
         this._pool['compressionMethod'] = imageCompression
-        
+
         this._setupComplete = function () {
             this._ready = true;
             // self.promises.ready.resolve();
@@ -114,6 +116,9 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
     }
     
     //Static functions
+    $.GeoTIFFTileSource.destroyPool = function () {
+
+    }
     
     //To do: add documentation about what this does (i.e. separates likely subimages into separate GeoTIFFTileSource objects)
     $.GeoTIFFTileSource.getAllTileSources = async function (input, opts = { cache: true, slideOnly: false }) {
