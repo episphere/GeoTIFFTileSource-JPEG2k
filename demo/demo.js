@@ -12,7 +12,6 @@ let viewer =window.viewer= OpenSeadragon({
 //https://modis-vi-nasa.s3-us-west-2.amazonaws.com//MOD13A1.006/2018.01.01.tif
 
 document.getElementById('file-picker').onchange=function(ev){
-    viewer.close();
     clearImageInfo();
     
     setupImage(this.files[0], this.files[0].name);
@@ -20,7 +19,6 @@ document.getElementById('file-picker').onchange=function(ev){
 }
 
 document.getElementById('use-link').onclick=function(){
-    viewer.close();
     clearImageInfo();
     let input = document.getElementById('link-input');
     let url=input.value;
@@ -40,21 +38,11 @@ let links=[...document.querySelectorAll('.demo-link')].map(el=>{
 });
 
 function setupImage(tileSourceInput,tilesourceName=''){
-    viewer.close();
     clearImageInfo();
     document.getElementById('filename').textContent=tilesourceName;
 
-    let tiffTileSources = OpenSeadragon.GeoTIFFTileSource.getAllTileSources(tileSourceInput, {logLatency: true });
-    tiffTileSources.then(ts=>{
-        if (viewer.tileSources) {
-            if (Array.isArray(viewer.tileSources)) {
-                viewer.tileSources.forEach(ts => ts._pool?.destroy())
-            } else {
-                viewer.tileSources._pool?.destroy()
-            }
-        }
-        viewer.open(ts)
-    });
+    let tiffTileSources = OpenSeadragon.GeoTIFFTileSource.getAllTileSources(tileSourceInput, { logLatency: true, slideOnly: true, pool: viewer.world?.getItemAt(0)?.source._pool });
+    tiffTileSources.then(ts=> viewer.open(ts) );
 
     tiffTileSources.then(tileSources=>{
         document.getElementById('filename').textContent += ' -- '+tileSources.length+' image'+(tileSources.length!=1?'s':'')+' found'

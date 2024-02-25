@@ -37,7 +37,7 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
      * @property {Array}  levels
      */
 
-    $.GeoTIFFTileSource = function (input, opts = { logLatency: false, cache: true }) {
+    $.GeoTIFFTileSource = function (input, opts = { logLatency: false, cache: true, pool }) {
         let self = this;
         this.options = opts;
 
@@ -49,18 +49,25 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
         const imageCompression = input.GeoTIFFImages[0].fileDirectory.Compression
         
         this.destroyPool = function () {
+            console.log("DESTROYING POOL")
             this._pool?.destroy()
-        }
-        this.destroyPool()
-        
-        if (supportedDecoders[imageCompression] && this._pool?.compressionMethod !== imageCompression) {
+            console.log("AFTER DESTRUCTION")
+            console.log(this._pool)
             this._pool = undefined
-            const createWorker = () => new Worker(URL.createObjectURL(new Blob([`
-                importScripts("${baseURL}/decoders/${supportedDecoders[imageCompression]}")
-            `])))
-            this._pool = new Pool(navigator.hardwareConcurrency, createWorker)
+        }
+        
+        if (!opts.pool || opts.pool.compressionMethod !== imageCompression) {
+            opts.pool?.destroy()
+            if (supportedDecoders[imageCompression] && this._pool?.compressionMethod !== imageCompression) {
+                const createWorker = () => new Worker(URL.createObjectURL(new Blob([`
+                    importScripts("${baseURL}/decoders/${supportedDecoders[imageCompression]}")
+                `])))
+                this._pool = new Pool(navigator.hardwareConcurrency, createWorker)
+            } else {
+                this._pool = new Pool(); 
+            }
         } else {
-            this._pool = new Pool(); 
+            this._pool = opts.pool
         }
         this._pool['compressionMethod'] = imageCompression
 
@@ -116,12 +123,9 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
     }
     
     //Static functions
-    $.GeoTIFFTileSource.destroyPool = function () {
-
-    }
     
     //To do: add documentation about what this does (i.e. separates likely subimages into separate GeoTIFFTileSource objects)
-    $.GeoTIFFTileSource.getAllTileSources = async function (input, opts = { cache: true, slideOnly: false }) {
+    $.GeoTIFFTileSource.getAllTileSources = async function (input, opts = { cache: true, slideOnly: false, pool }) {
         let cacheControlHeaders = undefined
         if (opts.cache === false) {
             cacheControlHeaders = {
