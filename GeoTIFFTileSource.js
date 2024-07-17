@@ -56,9 +56,9 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
             this._pool = undefined
         }
         
-        if (!opts.pool || opts.pool.compressionMethod !== imageCompression) {
+        if (!opts.pool || opts.pool.supportedCompression !== imageCompression) {
             opts.pool?.destroy()
-            if (supportedDecoders[imageCompression] && this._pool?.compressionMethod !== imageCompression) {
+            if (supportedDecoders[imageCompression] && this._pool?.supportedCompression !== imageCompression) {
                 const createWorker = () => new Worker(URL.createObjectURL(new Blob([`
                     importScripts("${baseURL}/decoders/${supportedDecoders[imageCompression]}")
                 `])))
@@ -69,7 +69,7 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
         } else {
             this._pool = opts.pool
         }
-        this._pool['compressionMethod'] = imageCompression
+        this._pool['supportedCompression'] = imageCompression
 
         this._setupComplete = function () {
             this._ready = true;
