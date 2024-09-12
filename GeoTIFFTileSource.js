@@ -37,7 +37,7 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
      * @property {Array}  levels
      */
 
-    $.GeoTIFFTileSource = function (input, opts = { logLatency: false, cache: true, pool }) {
+    $.GeoTIFFTileSource = function (input, opts = { 'logLatency': false, 'cache': true, 'pool': undefined }) {
         let self = this;
         this.options = opts;
 
@@ -74,13 +74,13 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
         this._setupComplete = function () {
             this._ready = true;
             // self.promises.ready.resolve();
-            self.raiseEvent('ready', { tileSource: self });
+            self.raiseEvent('ready', { 'tileSource': self });
         }
 
         if (input.GeoTIFF && input.GeoTIFFImages) {
             this.promises = {
-                GeoTIFF: Promise.resolve(input.GeoTIFF),
-                GeoTIFFImages: Promise.resolve(input.GeoTIFFImages),
+                'GeoTIFF': Promise.resolve(input.GeoTIFF),
+                'GeoTIFFImages': Promise.resolve(input.GeoTIFFImages),
                 // ready: DeferredPromise(),
             }
             this.GeoTIFF = input.GeoTIFF;
@@ -98,7 +98,7 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
                 }
             }
             this.promises = {
-                GeoTIFF: input instanceof File ? fromBlob(input) : fromUrl(input, { headers: cacheControlHeaders }),
+                GeoTIFF: input instanceof File ? fromBlob(input) : fromUrl(input, { 'headers': cacheControlHeaders }),
                 GeoTIFFImages: DeferredPromise(),
                 ready: DeferredPromise(),
             }
@@ -125,14 +125,14 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
     //Static functions
     
     //To do: add documentation about what this does (i.e. separates likely subimages into separate GeoTIFFTileSource objects)
-    $.GeoTIFFTileSource.getAllTileSources = async function (input, opts = { cache: true, slideOnly: false, pool }) {
+    $.GeoTIFFTileSource.getAllTileSources = async function (input, opts = { 'cache': true, 'slideOnly': false, 'pool': undefined }) {
         let cacheControlHeaders = undefined
         if (opts.cache === false) {
             cacheControlHeaders = {
                 'Cache-Control': "no-cache,no-store"
             }
         }
-        let tiff = input instanceof File ? fromBlob(input) : fromUrl(input, { headers: cacheControlHeaders });
+        let tiff = input instanceof File ? fromBlob(input) : fromUrl(input, { 'headers': cacheControlHeaders });
         return tiff.then(t => { tiff = t; return t.getImageCount() })
             .then(c => {
                 if (c > 4) {
@@ -175,7 +175,7 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
                     }, [])]
                 }
                 
-                let tilesources = imagesets.map(images => new $.GeoTIFFTileSource({ GeoTIFF: tiff, GeoTIFFImages: images }, opts));
+                let tilesources = imagesets.map(images => new $.GeoTIFFTileSource({ 'GeoTIFF': tiff, 'GeoTIFFImages': images }, opts));
                 
                 return tilesources;
 
