@@ -135,9 +135,6 @@ import { fromBlob, fromUrl, Pool, globals } from "https://cdn.jsdelivr.net/npm/g
         let tiff = input instanceof File ? fromBlob(input) : fromUrl(input, { 'headers': cacheControlHeaders });
         return tiff.then(t => { tiff = t; return t.getImageCount() })
             .then(c => {
-                if (c > 4) {
-                    c = 4
-                }
                 return Promise.all([...Array(c).keys()].map(index => tiff.getImage(index)))
             })
             .then(images => {
